@@ -1,4 +1,4 @@
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Operating system families. Named <c>OperatingSystemType</c> to avoid clashing with <c>System.OperatingSystem</c>.

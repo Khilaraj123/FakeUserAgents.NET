@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 
-namespace Dotnet.FakeUserAgents.Internal;
+namespace FakeUserAgents.NET.Internal;
 
 /// <summary>
 /// Precomputes and caches immutable slices of the user agent database with cumulative weight indexes.

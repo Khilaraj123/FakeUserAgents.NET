@@ -6,12 +6,12 @@
 		<Nullable>enable</Nullable>
 
 		<!-- NuGet metadata -->
-		<PackageId>Dotnet.FakeUserAgents</PackageId>
+		<PackageId>FakeUserAgents.NET</PackageId>
 		<Version>1.0.1</Version>
 		<Authors>Khilaraj Regmi</Authors>
 		<Company>Khilaraj Regmi</Company>
 
-		<Title>Dotnet.FakeUserAgents</Title>
+		<Title>FakeUserAgents.NET</Title>
 		<Description>
 			High-performance .NET library for generating and rotating realistic
 			browser User-Agent profiles for web scrapers, crawlers, API clients,
@@ -34,7 +34,7 @@
 
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
-		<PackageReleaseNotes>Release 1.0.1: Included LICENSE and README package assets, added symbols (.snupkg), implemented IReadOnlyList on IndexedPool, and resolved doc warnings.</PackageReleaseNotes>
+		<PackageReleaseNotes>Release 1.0.1: Resolved rotation edge cases (NoImmediateRepeat first selection, default ImmutableArray fallback), added atomic deck swapping for Shuffled strategy, enhanced thread safety, and race-free session cleanup.</PackageReleaseNotes>
 
 		<PackageOutputPath>./nupkg</PackageOutputPath>
 	</PropertyGroup>
@@ -49,7 +49,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="Dotnet.FakeUserAgents.Tests" />
+		<InternalsVisibleTo Include="FakeUserAgents.NET.Tests" />
 	</ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
-using Dotnet.FakeUserAgents.Internal;
+using FakeUserAgents.NET.Internal;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Provides realistic browser user agent strings from a built-in pre-indexed database.

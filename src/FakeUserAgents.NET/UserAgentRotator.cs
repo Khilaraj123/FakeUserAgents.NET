@@ -1,8 +1,8 @@
-using Dotnet.FakeUserAgents.Internal;
+using FakeUserAgents.NET.Internal;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Provides high-performance, thread-safe rotation through realistic user agent profiles.
@@ -23,7 +23,7 @@ public sealed class UserAgentRotator
 
     // Round-robin & shuffled state
     private int _currentIndex = -1;
-    private readonly int[] _shuffledIndices;
+    private volatile int[] _shuffledIndices;
     private readonly double[] _cumulativeWeights;
     private readonly double _totalWeight;
     private int _shuffledPosition;
@@ -136,8 +136,9 @@ public sealed class UserAgentRotator
         Random? random = null,
         int maxSessions = 10_000)
     {
+        ArgumentNullException.ThrowIfNull(pool);
         var array = pool is ImmutableArray<UserAgentInfo> immutable ? immutable : pool.ToImmutableArray();
-        if (array.Length == 0)
+        if (array.IsDefaultOrEmpty)
         {
             array = ImmutableArray.Create(UaDatabase.DefaultEntry);
         }
@@ -148,16 +149,17 @@ public sealed class UserAgentRotator
         _random = random ?? Random.Shared;
         _maxSessions = Math.Max(100, maxSessions);
 
-        _shuffledIndices = new int[_pool.Length];
+        var initialIndices = new int[_pool.Length];
         _cumulativeWeights = new double[_pool.Length];
         double sum = 0;
-        for (int i = 0; i < _shuffledIndices.Length; i++)
+        for (int i = 0; i < initialIndices.Length; i++)
         {
-            _shuffledIndices[i] = i;
+            initialIndices[i] = i;
             sum += _pool[i].Weight;
             _cumulativeWeights[i] = sum;
         }
         _totalWeight = sum;
+        _shuffledIndices = initialIndices;
 
         ShuffleIndicesInternal();
     }
@@ -217,7 +219,15 @@ public sealed class UserAgentRotator
             sessionId,
             _ => new Lazy<UserAgentInfo>(() => Next(), LazyThreadSafetyMode.ExecutionAndPublication));
 
-        return lazy.Value;
+        try
+        {
+            return lazy.Value;
+        }
+        catch
+        {
+            _sessions.TryRemove(new KeyValuePair<string, Lazy<UserAgentInfo>>(sessionId, lazy));
+            throw;
+        }
     }
 
     /// <summary>
@@ -228,10 +238,19 @@ public sealed class UserAgentRotator
     /// <returns><see langword="true"/> if a session exists; otherwise, <see langword="false"/>.</returns>
     public bool TryGetSession(string sessionId, out UserAgentInfo? info)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+
         if (_sessions.TryGetValue(sessionId, out var lazy) && lazy.IsValueCreated)
         {
-            info = lazy.Value;
-            return true;
+            try
+            {
+                info = lazy.Value;
+                return true;
+            }
+            catch
+            {
+                _sessions.TryRemove(new KeyValuePair<string, Lazy<UserAgentInfo>>(sessionId, lazy));
+            }
         }
 
         info = null;
@@ -316,17 +335,18 @@ public sealed class UserAgentRotator
     {
         while (true)
         {
+            var deck = _shuffledIndices;
             int pos = Interlocked.Increment(ref _shuffledPosition) - 1;
 
-            if (pos < _shuffledIndices.Length)
+            if ((uint)pos < (uint)deck.Length)
             {
-                return _shuffledIndices[pos];
+                return deck[pos];
             }
 
             // Cycle exhausted — synchronize reshuffle
             lock (_shuffleSync)
             {
-                if (_shuffledPosition >= _shuffledIndices.Length)
+                if ((uint)_shuffledPosition >= (uint)_shuffledIndices.Length)
                 {
                     ShuffleIndicesInternal();
                     _shuffledPosition = 0;
@@ -347,10 +367,18 @@ public sealed class UserAgentRotator
 
         lock (_noRepeatSync)
         {
-            int candidate = _isSharedRandom ? Random.Shared.Next(_pool.Length - 1) : _random.Next(_pool.Length - 1);
-            if (_lastPickedIndex >= 0 && candidate >= _lastPickedIndex)
+            int candidate;
+            if (_lastPickedIndex < 0)
             {
-                candidate++;
+                candidate = _isSharedRandom ? Random.Shared.Next(_pool.Length) : NextRandomInt(_pool.Length);
+            }
+            else
+            {
+                candidate = _isSharedRandom ? Random.Shared.Next(_pool.Length - 1) : NextRandomInt(_pool.Length - 1);
+                if (candidate >= _lastPickedIndex)
+                {
+                    candidate++;
+                }
             }
 
             _lastPickedIndex = candidate;
@@ -358,14 +386,35 @@ public sealed class UserAgentRotator
         }
     }
 
+    private int NextRandomInt(int max)
+    {
+        lock (_randomSync)
+        {
+            return _random.Next(max);
+        }
+    }
+
     private void ShuffleIndicesInternal()
     {
-        int n = _shuffledIndices.Length;
+        int[] newDeck = (int[])_shuffledIndices.Clone();
+        int n = newDeck.Length;
         while (n > 1)
         {
-            int k = _isSharedRandom ? Random.Shared.Next(n--) : _random.Next(n--);
-            (_shuffledIndices[n], _shuffledIndices[k]) = (_shuffledIndices[k], _shuffledIndices[n]);
+            int k;
+            if (_isSharedRandom)
+            {
+                k = Random.Shared.Next(n--);
+            }
+            else
+            {
+                lock (_randomSync)
+                {
+                    k = _random.Next(n--);
+                }
+            }
+            (newDeck[n], newDeck[k]) = (newDeck[k], newDeck[n]);
         }
+        _shuffledIndices = newDeck;
     }
 
     private void TrimSessions()

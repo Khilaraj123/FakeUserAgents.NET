@@ -1,4 +1,4 @@
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Browsers available in the built-in database.

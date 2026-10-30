@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Dotnet.FakeUserAgents.Internal;
+namespace FakeUserAgents.NET.Internal;
 
 /// <summary>
 /// Data transfer object used for deserializing raw records from the embedded <c>useragents.json</c> file.

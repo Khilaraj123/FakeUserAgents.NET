@@ -1,4 +1,4 @@
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Device categories supported by the user agent database.

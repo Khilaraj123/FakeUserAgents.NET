@@ -1,7 +1,8 @@
-using Dotnet.FakeUserAgents.Internal;
+using FakeUserAgents.NET;
+using FakeUserAgents.NET.Internal;
 using Xunit;
 
-namespace Dotnet.FakeUserAgents.Tests;
+namespace FakeUserAgents.NET.Tests;
 
 public class IndexLookupTests
 {

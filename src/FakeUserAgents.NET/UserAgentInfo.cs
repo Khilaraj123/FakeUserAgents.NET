@@ -1,4 +1,4 @@
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Represents a user agent string along with structured metadata describing the browser, device, and operating system.

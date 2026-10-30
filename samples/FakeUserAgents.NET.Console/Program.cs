@@ -1,7 +1,7 @@
-using Dotnet.FakeUserAgents;
+using FakeUserAgents.NET;
 
 Console.WriteLine("=================================================");
-Console.WriteLine(" Dotnet.FakeUserAgents - Scraper & Crawler Demo");
+Console.WriteLine(" FakeUserAgents.NET - Scraper & Crawler Demo");
 Console.WriteLine("=================================================\n");
 
 // 1. Basic Generation & Metadata

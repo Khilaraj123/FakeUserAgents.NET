@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Dotnet.FakeUserAgents.Internal;
+namespace FakeUserAgents.NET.Internal;
 
 /// <summary>
 /// Source-generated <see cref="JsonSerializerContext"/> for deserializing <see cref="UaEntry"/> collections.

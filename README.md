@@ -1,9 +1,9 @@
-# Dotnet.FakeUserAgents
+# FakeUserAgents.NET
 
 A high-performance, lightweight .NET library for generating and rotating realistic browser User-Agent profiles with metadata. Designed for web scrapers, crawlers, integration tests, and API clients requiring clean browser emulation, smart rotation strategies, and session affinity.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
-[![NuGet](https://img.shields.io/nuget/v/Dotnet.FakeUserAgents.svg?style=flat&logo=nuget)](https://www.nuget.org/packages/Dotnet.FakeUserAgents)
+[![NuGet](https://img.shields.io/nuget/v/FakeUserAgents.NET.svg?style=flat&logo=nuget)](https://www.nuget.org/packages/FakeUserAgents.NET)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
 
 ---
@@ -35,9 +35,9 @@ A high-performance, lightweight .NET library for generating and rotating realist
 ## Repository Structure
 
 ```text
-Dotnet.FakeUserAgents/
+FakeUserAgents.NET/
 ├── src/
-│   └── Dotnet.FakeUserAgents/          # Core library (.NET 10)
+│   └── FakeUserAgents.NET/             # Core library (.NET 10)
 │       ├── Internal/
 │       │   ├── UaDatabase.cs           # Embedded database loader & fallback catalog
 │       │   ├── UaIndex.cs              # Precomputed FrozenDictionary index pools
@@ -54,18 +54,18 @@ Dotnet.FakeUserAgents/
 │       ├── UserAgentSessionManager.cs
 │       └── UserAgentValidator.cs
 ├── tests/
-│   └── Dotnet.FakeUserAgents.Tests/    # xUnit test suite (concurrency, validation, recency CI)
+│   └── FakeUserAgents.NET.Tests/       # xUnit test suite (concurrency, validation, recency CI)
 ├── samples/
-│   └── Dotnet.FakeUserAgents.Console/  # Crawler & HttpClient usage demo
+│   └── FakeUserAgents.NET.Console/     # Crawler & HttpClient usage demo
 ├── benchmarks/
-│   └── Dotnet.FakeUserAgents.Benchmarks/# Microbenchmark suite
+│   └── FakeUserAgents.NET.Benchmarks/  # Microbenchmark suite
 ├── scripts/
 │   └── refresh-dataset.ps1             # Automated dataset validation & refresh script
 ├── docs/
 │   └── DATASET_REFRESH.md              # Documented dataset maintenance process
 ├── README.md
 ├── LICENSE.txt
-└── Dotnet.FakeUserAgents.slnx
+└── FakeUserAgents.NET.slnx
 ```
 
 ---
@@ -75,13 +75,13 @@ Dotnet.FakeUserAgents/
 Add the package via the .NET CLI:
 
 ```bash
-dotnet add package Dotnet.FakeUserAgents
+dotnet add package FakeUserAgents.NET
 ```
 
 Or via NuGet Package Manager:
 
 ```powershell
-Install-Package Dotnet.FakeUserAgents
+Install-Package FakeUserAgents.NET
 ```
 
 ---
@@ -89,7 +89,7 @@ Install-Package Dotnet.FakeUserAgents
 ## Quick Start
 
 ```csharp
-using Dotnet.FakeUserAgents;
+using FakeUserAgents.NET;
 
 var ua = new UserAgent();
 
@@ -201,7 +201,7 @@ UserAgentInfo userUa = sessionManager.GetOrCreate("client-auth-token");
 ### 6. Integration with `HttpClient`
 
 ```csharp
-using Dotnet.FakeUserAgents;
+using FakeUserAgents.NET;
 
 var rotator = new UserAgentRotator(RotationStrategy.NoImmediateRepeat);
 using var httpClient = new HttpClient();
@@ -245,9 +245,9 @@ See [docs/DATASET_REFRESH.md](docs/DATASET_REFRESH.md) for complete details on t
 | :--- | :--- | :--- | :--- |
 | `ua.GetRandom()` | `UserAgentInfo` | **0 B** | Returns existing cached reference |
 | `ua.Get(...)` | `UserAgentInfo` | **0 B** | O(1) indexed lookup |
-| `rotator.Next()` | `UserAgentInfo` | **0 B** | Lock-free / atomic access |
+| `rotator.Next()` | `UserAgentInfo` | **0 B** | 0 B for RoundRobin/NoImmediateRepeat; ~4 B/op amortized for Shuffled |
 | `rotator.NextUserAgent()` | `string` | **0 B** | Returns existing string reference |
-| `sessionManager.GetOrCreate()` | `UserAgentInfo` | **0 B (hit)** | In-place timestamp update |
+| `sessionManager.GetOrCreate()` | `UserAgentInfo` | **0 B / ~40 B** | Zero-allocation fast hit; bounded cache entry |
 | `ua.ToDictionary()` | `Dictionary<string, string>` | **Allocates** | Convenience conversion |
 | `rotator.NextAsDictionary()` | `Dictionary<string, string>` | **Allocates** | Convenience conversion |
 
@@ -255,31 +255,32 @@ See [docs/DATASET_REFRESH.md](docs/DATASET_REFRESH.md) for complete details on t
 
 ## Performance Benchmarks
 
-Benchmarks are located in `benchmarks/Dotnet.FakeUserAgents.Benchmarks`. To execute them on your hardware:
+Benchmarks are located in `benchmarks/FakeUserAgents.NET.Benchmarks`. To execute them on your hardware:
 
 ```bash
-dotnet run -c Release --project benchmarks/Dotnet.FakeUserAgents.Benchmarks/Dotnet.FakeUserAgents.Benchmarks.csproj
+dotnet run -c Release --project benchmarks/FakeUserAgents.NET.Benchmarks/FakeUserAgents.NET.Benchmarks.csproj
 ```
 
 *Results from .NET 10.0 (x64) execution:*
 
 | Method | Strategy / Mode | Mean Latency | Throughput | Allocated |
 | :--- | :--- | :--- | :--- | :--- |
-| `Rotator.Next()` | `RoundRobin` (Atomic) | **21.1 ns** | **~47,300,000 ops/s** | **0.0 B/op** |
-| `Rotator.Next()` | `Shuffled` (Amortized) | **74.4 ns** | **~13,400,000 ops/s** | **0.0 B/op** |
-| `Rotator.Next()` | `NoImmediateRepeat` | **98.2 ns** | **~10,180,000 ops/s** | **0.0 B/op** |
-| `UserAgent.GetRandom()` | O(1) Weighted Index | **223.0 ns** | **~4,480,000 ops/s** | **0.0 B/op** |
-| `SessionManager.GetOrCreate()` | Bounded Cache Hit | **276.7 ns** | **~3,610,000 ops/s** | **40.0 B/op** |
-| `UserAgent.Get(B, D, OS)` | O(1) Precomputed Fallback | **862.3 ns** | **~1,160,000 ops/s** | **0.0 B/op** |
+| `Rotator.Next()` | `RoundRobin` (Atomic) | **11.8 ns** | **~84,400,000 ops/s** | **0.0 B/op** |
+| `Rotator.Next()` | `Shuffled` (Amortized) | **51.9 ns** | **~19,280,000 ops/s** | **4.3 B/op** |
+| `Rotator.Next()` | `NoImmediateRepeat` | **68.6 ns** | **~14,580,000 ops/s** | **0.0 B/op** |
+| `SessionManager.GetOrCreate()` | Bounded Cache Hit | **88.0 ns** | **~11,370,000 ops/s** | **40.0 B/op** |
+| `UserAgent.GetRandom()` | O(1) Indexed | **142.0 ns** | **~7,040,000 ops/s** | **0.0 B/op** |
+| `Rotator.GetForSession()` | Session Affinity Hit | **193.1 ns** | **~5,180,000 ops/s** | **64.0 B/op** |
+| `UserAgent.Get(B, D, OS)` | O(1) Precomputed Fallback | **518.6 ns** | **~1,930,000 ops/s** | **0.0 B/op** |
 
 ---
 
 ## Running the Sample Application
 
-A runnable scraper and crawler demonstration is included in `samples/Dotnet.FakeUserAgents.Console`:
+A runnable scraper and crawler demonstration is included in `samples/FakeUserAgents.NET.Console`:
 
 ```bash
-dotnet run --project samples/Dotnet.FakeUserAgents.Console/Dotnet.FakeUserAgents.Console.csproj
+dotnet run --project samples/FakeUserAgents.NET.Console/FakeUserAgents.NET.Console.csproj
 ```
 
 ---

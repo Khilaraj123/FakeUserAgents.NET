@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Dataset maintenance script for Dotnet.FakeUserAgents.
+    Dataset maintenance script for FakeUserAgents.NET.
 .DESCRIPTION
     Validates dataset recency and checks market-share distribution across all embedded entries.
 .EXAMPLE
@@ -15,10 +15,10 @@ param(
 
 $PSScriptRootDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $PSScriptRootDirectory
-$DataPath = [System.IO.Path]::Combine($RepoRoot, "src", "Dotnet.FakeUserAgents", "Data", "useragents.json")
+$DataPath = [System.IO.Path]::Combine($RepoRoot, "src", "FakeUserAgents.NET", "Data", "useragents.json")
 
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host " Dotnet.FakeUserAgents - Dataset Validator" -ForegroundColor Cyan
+Write-Host " FakeUserAgents.NET - Dataset Validator" -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $DataPath)) {

@@ -1,4 +1,4 @@
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Defines strategies for rotating across user agent profiles.

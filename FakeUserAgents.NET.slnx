@@ -1,14 +1,14 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Dotnet.FakeUserAgents/Dotnet.FakeUserAgents.csproj" />
+    <Project Path="src/FakeUserAgents.NET/FakeUserAgents.NET.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Dotnet.FakeUserAgents.Tests/Dotnet.FakeUserAgents.Tests.csproj" />
+    <Project Path="tests/FakeUserAgents.NET.Tests/FakeUserAgents.NET.Tests.csproj" />
   </Folder>
   <Folder Name="/samples/">
-    <Project Path="samples/Dotnet.FakeUserAgents.Console/Dotnet.FakeUserAgents.Console.csproj" />
+    <Project Path="samples/FakeUserAgents.NET.Console/FakeUserAgents.NET.Console.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/Dotnet.FakeUserAgents.Benchmarks/Dotnet.FakeUserAgents.Benchmarks.csproj" />
+    <Project Path="benchmarks/FakeUserAgents.NET.Benchmarks/FakeUserAgents.NET.Benchmarks.csproj" />
   </Folder>
 </Solution>

@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// High-performance, memory-bounded session persistence manager for user agents.
@@ -33,6 +33,11 @@ public sealed class UserAgentSessionManager
     public int MaxSessions => _maxSessions;
 
     /// <summary>
+    /// Gets the optional sliding expiration duration for sessions.
+    /// </summary>
+    public TimeSpan? SlidingExpiration => _slidingExpiration;
+
+    /// <summary>
     /// Initializes a new instance of <see cref="UserAgentSessionManager"/>.
     /// </summary>
     /// <param name="slidingExpiration">Optional duration after which inactive sessions expire and are purged.</param>
@@ -43,6 +48,11 @@ public sealed class UserAgentSessionManager
         int maxSessions = 10_000,
         UserAgent? generator = null)
     {
+        if (slidingExpiration.HasValue && slidingExpiration.Value <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(slidingExpiration), slidingExpiration.Value, "Sliding expiration must be a positive duration.");
+        }
+
         _slidingExpiration = slidingExpiration;
         _expirationTicks = slidingExpiration?.Ticks ?? 0;
         _maxSessions = Math.Max(100, maxSessions);
@@ -79,8 +89,8 @@ public sealed class UserAgentSessionManager
                 return entry.Info;
             }
 
-            // Expired — remove stale entry
-            _sessions.TryRemove(sessionId, out _);
+            // Expired — remove stale entry conditionally
+            _sessions.TryRemove(new KeyValuePair<string, Lazy<SessionEntry>>(sessionId, existingLazy));
         }
 
         // Bounded capacity protection
@@ -102,9 +112,17 @@ public sealed class UserAgentSessionManager
                 };
             }, LazyThreadSafetyMode.ExecutionAndPublication));
 
-        var finalEntry = createdLazy.Value;
-        Volatile.Write(ref finalEntry.LastAccessTicks, nowTicks);
-        return finalEntry.Info;
+        try
+        {
+            var finalEntry = createdLazy.Value;
+            Volatile.Write(ref finalEntry.LastAccessTicks, nowTicks);
+            return finalEntry.Info;
+        }
+        catch
+        {
+            _sessions.TryRemove(new KeyValuePair<string, Lazy<SessionEntry>>(sessionId, createdLazy));
+            throw;
+        }
     }
 
     /// <summary>
@@ -121,15 +139,22 @@ public sealed class UserAgentSessionManager
 
         if (_sessions.TryGetValue(sessionId, out var lazy) && lazy.IsValueCreated)
         {
-            var entry = lazy.Value;
-            if (_expirationTicks == 0 || (nowTicks - Volatile.Read(ref entry.LastAccessTicks)) <= _expirationTicks)
+            try
             {
-                Volatile.Write(ref entry.LastAccessTicks, nowTicks);
-                info = entry.Info;
-                return true;
-            }
+                var entry = lazy.Value;
+                if (_expirationTicks == 0 || (nowTicks - Volatile.Read(ref entry.LastAccessTicks)) <= _expirationTicks)
+                {
+                    Volatile.Write(ref entry.LastAccessTicks, nowTicks);
+                    info = entry.Info;
+                    return true;
+                }
 
-            _sessions.TryRemove(sessionId, out _);
+                _sessions.TryRemove(new KeyValuePair<string, Lazy<SessionEntry>>(sessionId, lazy));
+            }
+            catch
+            {
+                _sessions.TryRemove(new KeyValuePair<string, Lazy<SessionEntry>>(sessionId, lazy));
+            }
         }
 
         info = null;
@@ -176,11 +201,24 @@ public sealed class UserAgentSessionManager
 
         foreach (var (key, lazy) in _sessions)
         {
-            if (lazy.IsValueCreated && Volatile.Read(ref lazy.Value.LastAccessTicks) < threshold)
+            if (lazy.IsValueCreated)
             {
-                if (_sessions.TryRemove(key, out _))
+                try
                 {
-                    removed++;
+                    if (Volatile.Read(ref lazy.Value.LastAccessTicks) < threshold)
+                    {
+                        if (_sessions.TryRemove(new KeyValuePair<string, Lazy<SessionEntry>>(key, lazy)))
+                        {
+                            removed++;
+                        }
+                    }
+                }
+                catch
+                {
+                    if (_sessions.TryRemove(new KeyValuePair<string, Lazy<SessionEntry>>(key, lazy)))
+                    {
+                        removed++;
+                    }
                 }
             }
         }

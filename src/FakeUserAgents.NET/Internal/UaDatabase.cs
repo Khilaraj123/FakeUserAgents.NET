@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Dotnet.FakeUserAgents.Internal;
+namespace FakeUserAgents.NET.Internal;
 
 /// <summary>
 /// Internal data repository that loads and caches user agent definitions from the embedded JSON resource.
@@ -10,7 +10,7 @@ namespace Dotnet.FakeUserAgents.Internal;
 /// </summary>
 internal static class UaDatabase
 {
-    private const string ResourceName = "Dotnet.FakeUserAgents.Data.useragents.json";
+    private const string ResourceName = "FakeUserAgents.NET.Data.useragents.json";
 
     /// <summary>
     /// Thread-safe lazy initializer for loading the user agent database on first access.

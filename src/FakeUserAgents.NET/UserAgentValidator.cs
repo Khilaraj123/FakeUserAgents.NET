@@ -1,6 +1,4 @@
-using System.Text.RegularExpressions;
-
-namespace Dotnet.FakeUserAgents;
+namespace FakeUserAgents.NET;
 
 /// <summary>
 /// Represents the result of validating a <see cref="UserAgentInfo"/> instance or collection.
@@ -206,6 +204,17 @@ public static class UserAgentValidator
                     {
                         errors.Add("Chrome user agent string must contain 'Chrome/'.");
                     }
+                }
+
+                // Pure Chrome user agent cannot contain third-party browser identifiers
+                if (ua.Contains("Edg/", StringComparison.OrdinalIgnoreCase) ||
+                    ua.Contains("EdgA/", StringComparison.OrdinalIgnoreCase) ||
+                    ua.Contains("EdgiOS/", StringComparison.OrdinalIgnoreCase) ||
+                    ua.Contains("OPR/", StringComparison.OrdinalIgnoreCase) ||
+                    ua.Contains("OPT/", StringComparison.OrdinalIgnoreCase) ||
+                    ua.Contains("FxiOS/", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add("Chrome user agent cannot contain third-party browser identifiers.");
                 }
                 break;
 

@@ -1,6 +1,7 @@
+using FakeUserAgents.NET;
 using Xunit;
 
-namespace Dotnet.FakeUserAgents.Tests;
+namespace FakeUserAgents.NET.Tests;
 
 public class UserAgentTests
 {

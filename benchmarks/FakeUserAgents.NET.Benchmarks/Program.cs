@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using Dotnet.FakeUserAgents;
+using FakeUserAgents.NET;
 
 Console.WriteLine("==========================================================================");
-Console.WriteLine(" Dotnet.FakeUserAgents - Generation & Rotation Benchmarks (.NET 10 x64)");
+Console.WriteLine(" FakeUserAgents.NET - Generation & Rotation Benchmarks (.NET 10 x64)");
 Console.WriteLine("==========================================================================\n");
 
 Console.WriteLine("Executing warmup and statistical benchmark passes...\n");
@@ -20,7 +20,8 @@ results.Add(Benchmark("UserAgent.GetRandom()", "O(1) Indexed", () =>
 results.Add(Benchmark("UserAgent.Get(B, D, OS)", "O(1) Precomputed", () =>
 {
     var ua = new UserAgent();
-    return () => ua.Get(Browser.Chrome, DeviceType.Desktop, OperatingSystemType.Windows);
+    return () => ua
+        .Get(Browser.Chrome, DeviceType.Desktop, OperatingSystemType.Windows);
 }));
 
 // 3. UserAgentRotator.Next() [RoundRobin]

@@ -1,6 +1,6 @@
 # User-Agent Dataset Refresh Process
 
-This document defines the methodology, standards, and workflow for maintaining the embedded `useragents.json` dataset in **Dotnet.FakeUserAgents**.
+This document defines the methodology, standards, and workflow for maintaining the embedded `useragents.json` dataset in **FakeUserAgents.NET**.
 
 ---
 
@@ -72,12 +72,12 @@ When a new browser major version is released:
 
 2. **Update Dataset**:
    - Run the helper script `scripts/refresh-dataset.ps1` with the new target major versions.
-   - Or manually update `src/Dotnet.FakeUserAgents/Data/useragents.json`.
+   - Or manually update `src/FakeUserAgents.NET/Data/useragents.json`.
 
 3. **Validate Dataset Integrity**:
    - Run the test suite:
      ```bash
-     dotnet test tests/Dotnet.FakeUserAgents.Tests/Dotnet.FakeUserAgents.Tests.csproj
+     dotnet test tests/FakeUserAgents.NET.Tests/FakeUserAgents.NET.Tests.csproj
      ```
    - The test `AllDatabaseEntries_PassStrongValidation` verifies tokens, device/OS consistency, and format rules.
    - The test `Dataset_NewestChromeVersion_IsNotStale` automatically guards against shipping outdated versions in CI.
@@ -88,7 +88,7 @@ When a new browser major version is released:
 
 ## 5. Automated CI Guardrail
 
-In `tests/Dotnet.FakeUserAgents.Tests/UaDatabaseTests.cs`, the following test runs on every pull request and build:
+In `tests/FakeUserAgents.NET.Tests/UaDatabaseTests.cs`, the following test runs on every pull request and build:
 
 ```csharp
 [Fact]
